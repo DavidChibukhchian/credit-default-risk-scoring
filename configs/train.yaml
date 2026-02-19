@@ -4,6 +4,17 @@ paths:
   artifacts_dir: artifacts
   data_dir: data
 
+data:
+  filename_train: application_train.csv
+  target_col: TARGET
+  id_cols: ["SK_ID_CURR"]
+  numeric_only: true
+
+split:
+  train_size: 0.70
+  val_size: 0.15
+  test_size: 0.15
+
 model:
   name: baseline_perceptron
   hidden_sizes: [128, 64]

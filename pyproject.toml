@@ -12,7 +12,7 @@ dependencies = [
     "numpy (>=2.4.2,<3.0.0)",
     "torchmetrics (>=1.8.2,<2.0.0)",
     "omegaconf (>=2.3.0,<3.0.0)",
-    "dvc (>=3.66.1,<4.0.0)",
+    "dvc[gdrive] (>=3.66.1,<4.0.0)",
     "scikit-learn (>=1.8.0,<2.0.0)"
 ]
 

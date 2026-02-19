@@ -20,7 +20,7 @@ class CreditRiskLitModule(pl.LightningModule):
         features, targets = batch
         logits = self(features).squeeze(1)
         loss = self.loss_fn(logits, targets)
-        self.log("train/loss", loss, prog_bar=True)
+        self.log("train/logloss", loss, prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -29,7 +29,7 @@ class CreditRiskLitModule(pl.LightningModule):
         loss = self.loss_fn(logits, targets)
         probs = torch.sigmoid(logits)
         auc = self.auroc(probs, targets.int())
-        self.log("val/loss", loss, prog_bar=True)
+        self.log("val/logloss", loss, prog_bar=True)
         self.log("val/roc_auc", auc, prog_bar=True)
 
     def test_step(self, batch, batch_idx):
@@ -38,7 +38,7 @@ class CreditRiskLitModule(pl.LightningModule):
         loss = self.loss_fn(logits, targets)
         probs = torch.sigmoid(logits)
         auc = self.auroc(probs, targets.int())
-        self.log("test/loss", loss, prog_bar=True)
+        self.log("test/logloss", loss, prog_bar=True)
         self.log("test/roc_auc", auc, prog_bar=True)
 
     def configure_optimizers(self):

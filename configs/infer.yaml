@@ -1,5 +1,10 @@
 paths:
   artifacts_dir: artifacts
+  data_dir: data
 
 infer:
+  filename_test: application_test.csv
+  id_col: SK_ID_CURR
+  request_id: null
+  model_name: mlp
   threshold: 0.5

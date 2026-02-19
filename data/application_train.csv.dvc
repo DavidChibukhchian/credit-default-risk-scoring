@@ -1,0 +1,13 @@
+outs:
+- md5: 793a017f41fbac1dc28176b26dbab30e
+  size: 166133370
+  hash: md5
+  path: application_train.csv
+md5: 665e39cbea95dd24f3346e14e9a05cb8
+frozen: true
+deps:
+- checksum: '"8b419a8349fa960cec771d514461ded8baf359082d75fa8356906fddf42207cd"'
+  size: 166133370
+  hash: md5
+  path:
+    https://huggingface.co/datasets/d-chibukhchian/credit-default-risk-scoring/resolve/main/application_train.csv

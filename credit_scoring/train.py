@@ -3,6 +3,7 @@ from pathlib import Path
 
 import hydra
 import pytorch_lightning as pl
+import torch
 from omegaconf import DictConfig
 
 from credit_scoring.dataset import make_loaders_from_application_train
@@ -66,7 +67,7 @@ def main(cfg: DictConfig):
     trainer.test(lit_model, dataloaders=test_loader, verbose=False)
 
     weights_path = artifacts_dir / f"{model_name}.pt"
-    pl.utilities.cloud_io.save(lit_model.state_dict(), weights_path)
+    torch.save(lit_model.state_dict(), weights_path)
 
     preprocess_path = artifacts_dir / "preprocess.json"
     preprocess_path.write_text(

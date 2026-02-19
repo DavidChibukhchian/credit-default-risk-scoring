@@ -11,7 +11,8 @@ dependencies = [
     "pandas (>=3.0.1,<4.0.0)",
     "numpy (>=2.4.2,<3.0.0)",
     "torchmetrics (>=1.8.2,<2.0.0)",
-    "omegaconf (>=2.3.0,<3.0.0)"
+    "omegaconf (>=2.3.0,<3.0.0)",
+    "dvc (>=3.66.1,<4.0.0)"
 ]
 
 [tool.poetry]
@@ -24,7 +25,7 @@ build-backend = "poetry.core.masonry.api"
 [dependency-groups]
 dev = [
     "pre-commit (>=4.5.1,<5.0.0)",
-    "black (>=26.1.0,<27.0.0)",
     "isort (>=7.0.0,<8.0.0)",
-    "flake8 (>=7.3.0,<8.0.0)"
+    "flake8 (>=7.3.0,<8.0.0)",
+    "black (==24.8.0)"
 ]

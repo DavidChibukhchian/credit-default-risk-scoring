@@ -1,0 +1,15 @@
+seed: 42
+
+paths:
+  artifacts_dir: artifacts
+  data_dir: data
+
+model:
+  name: baseline_perceptron
+  hidden_sizes: [128, 64]
+  dropout: 0.1
+
+train:
+  max_epochs: 3
+  batch_size: 256
+  lr: 0.001

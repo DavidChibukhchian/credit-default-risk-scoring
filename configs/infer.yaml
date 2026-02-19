@@ -1,0 +1,5 @@
+paths:
+  artifacts_dir: artifacts
+
+infer:
+  threshold: 0.5

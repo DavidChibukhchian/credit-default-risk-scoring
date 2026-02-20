@@ -1,7 +1,7 @@
 defaults:
   - data: home_credit
   - preprocess: numeric_only
-  - model: baseline_perceptron
+  - model: mlp
   - trainer: default
   - _self_
 
@@ -24,4 +24,4 @@ hf_urls:
 mlflow:
   tracking_uri: "http://127.0.0.1:8080"
   experiment_name: "credit_scoring"
-  run_name: "${model}"
+  run_name: "${model.name}"

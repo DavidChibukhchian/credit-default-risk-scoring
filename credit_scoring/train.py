@@ -4,7 +4,7 @@ from pathlib import Path
 import hydra
 import pytorch_lightning as pl
 import torch
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 from credit_scoring.data import ensure_file
 from credit_scoring.dataset import make_loaders_from_application_train
@@ -19,20 +19,20 @@ def main(cfg: DictConfig):
     artifacts_dir = Path(cfg.paths.artifacts_dir)
     artifacts_dir.mkdir(parents=True, exist_ok=True)
 
-    train_csv = f"{cfg.paths.data_dir}/{cfg.data.filename_train}"
+    train_csv = f"{cfg.paths.data_dir}/{cfg.data.train_file}"
     ensure_file(train_csv)
 
     loaders_out = make_loaders_from_application_train(
-        data_dir=str(cfg.paths.data_dir),
-        filename_train=str(cfg.data.filename_train),
-        target_col=str(cfg.data.target_col),
-        id_cols=list(cfg.data.id_cols),
-        numeric_only=bool(cfg.data.numeric_only),
-        split_train_size=float(cfg.split.train_size),
-        split_val_size=float(cfg.split.val_size),
-        split_test_size=float(cfg.split.test_size),
-        seed=int(cfg.seed),
-        batch_size=int(cfg.train.batch_size),
+        data_dir=cfg.paths.data_dir,
+        filename_train=cfg.data.train_file,
+        target_col=cfg.data.target_col,
+        id_cols=cfg.data.id_cols,
+        numeric_only=cfg.preprocess.numeric_only,
+        split_train_size=cfg.split.train_size,
+        split_val_size=cfg.split.val_size,
+        split_test_size=cfg.split.test_size,
+        seed=cfg.split.random_state,
+        batch_size=cfg.trainer.batch_size,
     )
 
     train_loader = loaders_out[0]
@@ -53,10 +53,11 @@ def main(cfg: DictConfig):
     else:
         raise ValueError(f"Unknown model.name: {model_name}")
 
-    lit_model = CreditRiskLitModule(model=torch_model, lr=float(cfg.train.lr))
+    lr = float(cfg.trainer.lr)
+    lit_model = CreditRiskLitModule(model=torch_model, lr=lr)
 
     trainer = pl.Trainer(
-        max_epochs=int(cfg.train.max_epochs),
+        max_epochs=int(cfg.trainer.max_epochs),
         accelerator="cpu",
         enable_checkpointing=False,
         logger=False,
@@ -72,6 +73,11 @@ def main(cfg: DictConfig):
 
     weights_path = artifacts_dir / f"{model_name}.pt"
     torch.save(lit_model.state_dict(), weights_path)
+
+    preprocess_artifacts = OmegaConf.to_container(
+        OmegaConf.create(preprocess_artifacts),
+        resolve=True,
+    )
 
     preprocess_path = artifacts_dir / "preprocess.json"
     preprocess_path.write_text(

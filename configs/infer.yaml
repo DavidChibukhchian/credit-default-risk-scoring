@@ -1,10 +1,14 @@
-paths:
-  artifacts_dir: artifacts
-  data_dir: data
+defaults:
+  - data: home_credit
+  - preprocess: numeric_only
+  - model: mlp
+  - infer_params: default
+  - _self_
 
-infer:
-  filename_test: application_test.csv
-  id_col: SK_ID_CURR
-  request_id: null
-  model_name: mlp
-  threshold: 0.5
+paths:
+  data_dir: data
+  artifacts_dir: artifacts
+
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}

@@ -46,7 +46,7 @@ def main(cfg: DictConfig):
     preprocess = json.loads(preprocess_path.read_text(encoding="utf-8"))
     num_features = len(preprocess["feature_names"])
 
-    model_name = str(cfg.infer.model_name)
+    model_name = str(cfg.model.name)
     if model_name == "baseline_perceptron":
         model = Perceptron(num_features=num_features)
         weights_path = artifacts_dir / "baseline_perceptron.pt"
@@ -74,20 +74,20 @@ def main(cfg: DictConfig):
     model.load_state_dict(state_dict)
     model.eval()
 
-    test_path = Path(cfg.paths.data_dir) / str(cfg.infer.filename_test)
+    test_path = Path(cfg.paths.data_dir) / str(cfg.data.test_file)
     if not test_path.exists():
         raise FileNotFoundError(f"Missing test CSV: {test_path}")
 
-    test_csv = f"{cfg.paths.data_dir}/{cfg.infer.filename_test}"
+    test_csv = f"{cfg.paths.data_dir}/{cfg.data.test_file}"
     ensure_file(test_csv)
 
     df_test = pd.read_csv(test_csv)
 
-    id_col = str(cfg.infer.id_col)
+    id_col = str(cfg.data.id_cols[0])
     if id_col not in df_test.columns:
         raise ValueError(f"ID column '{id_col}' not found in test CSV.")
 
-    request_id = cfg.infer.request_id
+    request_id = cfg.infer_params.request_id
     if request_id is None:
         row_df = df_test.iloc[[0]]
         request_id_value = int(row_df[id_col].iloc[0])
@@ -105,7 +105,7 @@ def main(cfg: DictConfig):
         logits = model(features).squeeze(1)
         prob = torch.sigmoid(logits).item()
 
-    threshold = float(cfg.infer.threshold)
+    threshold = float(cfg.infer_params.threshold)
     pred = int(prob >= threshold)
 
     print(f"id={request_id_value}")

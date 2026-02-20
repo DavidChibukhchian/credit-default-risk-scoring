@@ -1,0 +1,3 @@
+name: baseline_perceptron
+hidden_sizes: []
+dropout: 0.0

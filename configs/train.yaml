@@ -1,26 +1,22 @@
+defaults:
+  - data: home_credit
+  - preprocess: numeric_only
+  - model: baseline_perceptron
+  - trainer: default
+  - _self_
+
 seed: 42
 
 paths:
-  artifacts_dir: artifacts
   data_dir: data
-
-data:
-  filename_train: application_train.csv
-  target_col: TARGET
-  id_cols: ["SK_ID_CURR"]
-  numeric_only: true
+  artifacts_dir: artifacts
 
 split:
   train_size: 0.70
   val_size: 0.15
   test_size: 0.15
+  random_state: ${seed}
 
-model:
-  name: baseline_perceptron
-  hidden_sizes: [128, 64]
-  dropout: 0.1
-
-train:
-  max_epochs: 3
-  batch_size: 256
-  lr: 0.001
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}

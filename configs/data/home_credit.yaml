@@ -1,0 +1,8 @@
+name: home_credit
+
+train_file: application_train.csv
+test_file: application_test.csv
+
+target_col: TARGET
+id_cols:
+  - SK_ID_CURR

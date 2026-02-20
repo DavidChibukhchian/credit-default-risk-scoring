@@ -85,8 +85,18 @@ def main(cfg: DictConfig):
         encoding="utf-8",
     )
 
+    model_cfg = OmegaConf.to_container(cfg.model, resolve=True)
+    model_cfg["num_features"] = int(num_features)
+
+    model_cfg_path = artifacts_dir / "model_config.json"
+    model_cfg_path.write_text(
+        json.dumps(model_cfg, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
     print("Saved model:", weights_path)
     print("Saved preprocess:", preprocess_path)
+    print("Saved model config:", model_cfg_path)
     print("train: OK")
 
 

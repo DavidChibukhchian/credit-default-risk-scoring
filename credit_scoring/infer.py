@@ -36,6 +36,13 @@ def _prepare_single_row(row_df, preprocess):
     return torch.from_numpy(x)
 
 
+def _load_model_config(artifacts_dir: Path):
+    path = artifacts_dir / "model_config.json"
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 @hydra.main(version_base=None, config_path="../configs", config_name="infer")
 def main(cfg: DictConfig):
     artifacts_dir = Path(cfg.paths.artifacts_dir)
@@ -46,15 +53,32 @@ def main(cfg: DictConfig):
     preprocess = json.loads(preprocess_path.read_text(encoding="utf-8"))
     num_features = len(preprocess["feature_names"])
 
-    model_name = str(cfg.model.name)
+    model_cfg = _load_model_config(artifacts_dir)
+
+    requested_name = str(cfg.model.name)
+    if model_cfg is not None:
+        model_name = str(model_cfg.get("name", requested_name))
+        if model_name != requested_name:
+            print(
+                f"[warn] config requested model='{requested_name}', "
+                f"but artifacts contain model='{model_name}'. Using artifacts."
+            )
+        default_hs = cfg.model.hidden_sizes
+        hidden_sizes = list(model_cfg.get("hidden_sizes", default_hs))
+        dropout = float(model_cfg.get("dropout", float(cfg.model.dropout)))
+    else:
+        model_name = requested_name
+        hidden_sizes = list(cfg.model.hidden_sizes)
+        dropout = float(cfg.model.dropout)
+
     if model_name == "baseline_perceptron":
         model = Perceptron(num_features=num_features)
         weights_path = artifacts_dir / "baseline_perceptron.pt"
     elif model_name == "mlp":
         model = MLP(
             num_features=num_features,
-            hidden_sizes=[128, 64],
-            dropout=0.1,
+            hidden_sizes=hidden_sizes,
+            dropout=dropout,
         )
         weights_path = artifacts_dir / "mlp.pt"
     else:

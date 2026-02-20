@@ -13,6 +13,14 @@ def _load_preprocess(artifacts_dir):
         return json.load(f)
 
 
+def _load_model_config(artifacts_dir):
+    path = Path(artifacts_dir) / "model_config.json"
+    if not path.exists():
+        return None
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
 def _build_model(model_name, num_features, hidden_sizes, dropout):
     if model_name == "baseline_perceptron":
         return Perceptron(num_features=num_features)
@@ -30,10 +38,26 @@ def _preprocess_single(features, prep):
     mean = np.array(prep["scaler"]["mean"], dtype=np.float32)
     std = np.array(prep["scaler"]["std"], dtype=np.float32)
 
+    std = np.where(std == 0, 1.0, std)
+
     x = np.zeros((1, len(feature_names)), dtype=np.float32)
+    medians = prep["medians"]
+
     for i, name in enumerate(feature_names):
-        val = features.get(name, prep["medians"].get(name, 0.0))
-        x[0, i] = float(val)
+        val = features.get(name, medians.get(name, 0.0))
+
+        if val is None:
+            val = medians.get(name, 0.0)
+
+        try:
+            val = float(val)
+        except (TypeError, ValueError):
+            val = float(medians.get(name, 0.0))
+
+        if np.isnan(val) or np.isinf(val):
+            val = float(medians.get(name, 0.0))
+
+        x[0, i] = val
 
     x = (x - mean) / std
     return torch.from_numpy(x)
@@ -43,8 +67,15 @@ def load_predictor(model_name, artifacts_dir="artifacts"):
     prep = _load_preprocess(artifacts_dir)
     num_features = len(prep["feature_names"])
 
+    model_cfg = _load_model_config(artifacts_dir)
+
     hidden_sizes = [128, 64]
     dropout = 0.1
+
+    if model_name == "mlp" and model_cfg is not None:
+        if str(model_cfg.get("name")) == "mlp":
+            hidden_sizes = list(model_cfg.get("hidden_sizes", hidden_sizes))
+            dropout = float(model_cfg.get("dropout", dropout))
 
     model = _build_model(model_name, num_features, hidden_sizes, dropout)
     state = torch.load(

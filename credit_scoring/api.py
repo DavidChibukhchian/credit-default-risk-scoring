@@ -1,4 +1,5 @@
 import json
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
@@ -63,7 +64,8 @@ def _preprocess_single(features, prep):
     return torch.from_numpy(x)
 
 
-def load_predictor(model_name, artifacts_dir="artifacts"):
+@lru_cache(maxsize=8)
+def load_predictor(model_name="mlp", artifacts_dir="artifacts"):
     prep = _load_preprocess(artifacts_dir)
     num_features = len(prep["feature_names"])
 

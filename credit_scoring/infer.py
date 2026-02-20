@@ -7,6 +7,7 @@ import pandas as pd
 import torch
 from omegaconf import DictConfig
 
+from credit_scoring.data import ensure_file
 from credit_scoring.model import MLP, Perceptron
 
 
@@ -77,7 +78,10 @@ def main(cfg: DictConfig):
     if not test_path.exists():
         raise FileNotFoundError(f"Missing test CSV: {test_path}")
 
-    df_test = pd.read_csv(test_path)
+    test_csv = f"{cfg.paths.data_dir}/{cfg.infer.filename_test}"
+    ensure_file(test_csv)
+
+    df_test = pd.read_csv(test_csv)
 
     id_col = str(cfg.infer.id_col)
     if id_col not in df_test.columns:

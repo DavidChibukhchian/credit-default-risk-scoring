@@ -6,6 +6,7 @@ import pytorch_lightning as pl
 import torch
 from omegaconf import DictConfig
 
+from credit_scoring.data import ensure_file
 from credit_scoring.dataset import make_loaders_from_application_train
 from credit_scoring.lightning_module import CreditRiskLitModule
 from credit_scoring.model import MLP, Perceptron
@@ -17,6 +18,9 @@ def main(cfg: DictConfig):
 
     artifacts_dir = Path(cfg.paths.artifacts_dir)
     artifacts_dir.mkdir(parents=True, exist_ok=True)
+
+    train_csv = f"{cfg.paths.data_dir}/{cfg.data.filename_train}"
+    ensure_file(train_csv)
 
     loaders_out = make_loaders_from_application_train(
         data_dir=str(cfg.paths.data_dir),

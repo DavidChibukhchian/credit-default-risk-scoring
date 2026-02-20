@@ -16,3 +16,7 @@ split:
   val_size: 0.15
   test_size: 0.15
   random_state: ${seed}
+
+hf_urls:
+  application_train: "https://huggingface.co/datasets/d-chibukhchian/credit-default-risk-scoring/resolve/main/application_train.csv?download=1"
+  application_test: "https://huggingface.co/datasets/d-chibukhchian/credit-default-risk-scoring/resolve/main/application_test.csv?download=1"

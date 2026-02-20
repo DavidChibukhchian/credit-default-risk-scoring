@@ -1,11 +1,3 @@
-md5: 191159edc85171383d2f0267b1abadd4
-frozen: true
-deps:
-- checksum: '"45ea22de20ab859f620ad88bfda8612c8eca47fb3696603782c5cb55e92b19bd"'
-  size: 26567651
-  hash: md5
-  path:
-    https://huggingface.co/datasets/d-chibukhchian/credit-default-risk-scoring/resolve/main/application_test.csv
 outs:
 - md5: 42c2c6b7683003bae1b99c469f79497f
   size: 26567651

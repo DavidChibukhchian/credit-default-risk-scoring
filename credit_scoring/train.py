@@ -20,7 +20,7 @@ def main(cfg: DictConfig):
     artifacts_dir.mkdir(parents=True, exist_ok=True)
 
     train_csv = f"{cfg.paths.data_dir}/{cfg.data.train_file}"
-    ensure_file(train_csv)
+    ensure_file(train_csv, url=str(cfg.hf_urls.application_train))
 
     loaders_out = make_loaders_from_application_train(
         data_dir=cfg.paths.data_dir,

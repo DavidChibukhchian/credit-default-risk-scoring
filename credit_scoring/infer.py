@@ -98,12 +98,12 @@ def main(cfg: DictConfig):
     model.load_state_dict(state_dict)
     model.eval()
 
+    test_csv = f"{cfg.paths.data_dir}/{cfg.data.test_file}"
+    ensure_file(test_csv, url=str(cfg.hf_urls.application_test))
+
     test_path = Path(cfg.paths.data_dir) / str(cfg.data.test_file)
     if not test_path.exists():
         raise FileNotFoundError(f"Missing test CSV: {test_path}")
-
-    test_csv = f"{cfg.paths.data_dir}/{cfg.data.test_file}"
-    ensure_file(test_csv)
 
     df_test = pd.read_csv(test_csv)
 

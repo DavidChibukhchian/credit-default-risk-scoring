@@ -7,3 +7,4 @@ outputs/
 artifacts/
 multirun/
 .venv/
+dist/

@@ -35,3 +35,10 @@ dev = [
     "mypy (>=1.19.1,<2.0.0)",
     "mlflow (>=3.9.0,<4.0.0)",
 ]
+
+[tool.black]
+line-length = 89
+
+[tool.isort]
+profile = "black"
+line_length = 89

@@ -121,12 +121,15 @@ def main(cfg: DictConfig):
     plots_dir = Path("plots")
     plots_dir.mkdir(parents=True, exist_ok=True)
 
-    train_csv = f"{cfg.paths.data_dir}/{cfg.data.train_file}"
-    ensure_file(train_csv, url=str(cfg.hf_urls.application_train))
+    train_csv = ensure_file(
+        f"{cfg.paths.data_dir}/{cfg.data.train_file}",
+        url=str(cfg.hf_urls.application_train),
+    )
+    train_path = Path(train_csv)
 
     loaders_out = make_loaders_from_application_train(
-        data_dir=cfg.paths.data_dir,
-        filename_train=cfg.data.train_file,
+        data_dir=str(train_path.parent),
+        filename_train=train_path.name,
         target_col=cfg.data.target_col,
         id_cols=cfg.data.id_cols,
         numeric_only=cfg.preprocess.numeric_only,

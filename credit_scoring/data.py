@@ -3,6 +3,10 @@ from pathlib import Path
 from urllib.request import urlretrieve
 
 
+def _repo_root():
+    return Path(__file__).resolve().parents[1]
+
+
 def download_data(url, dst_path):
     dst_path = Path(dst_path)
     dst_path.parent.mkdir(parents=True, exist_ok=True)
@@ -12,10 +16,18 @@ def download_data(url, dst_path):
     return str(dst_path)
 
 
-def _try_dvc_pull(path):
+def _try_dvc_pull(target_abs):
+    repo_root = _repo_root()
+
+    try:
+        target_rel = target_abs.relative_to(repo_root)
+    except ValueError:
+        target_rel = target_abs
+
     try:
         subprocess.run(
-            ["dvc", "pull", str(path)],
+            ["dvc", "pull", str(target_rel)],
+            cwd=str(repo_root),
             check=True,
             capture_output=True,
             text=True,
@@ -26,15 +38,21 @@ def _try_dvc_pull(path):
 
 
 def ensure_file(path, url=None):
-    path = Path(path)
-    if path.exists():
-        return
 
-    _try_dvc_pull(path)
-    if path.exists():
-        return
+    path = Path(path)
+    repo_root = _repo_root()
+
+    target_abs = path if path.is_absolute() else (repo_root / path)
+
+    if target_abs.exists():
+        return str(target_abs)
+
+    pulled = _try_dvc_pull(target_abs)
+    if pulled and target_abs.exists():
+        return str(target_abs)
 
     if url is None:
-        raise FileNotFoundError(f"Missing: {path}")
+        raise FileNotFoundError(f"Missing: {target_abs}")
 
-    download_data(url, path)
+    download_data(url, target_abs)
+    return str(target_abs)

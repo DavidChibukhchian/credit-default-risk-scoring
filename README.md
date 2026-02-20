@@ -1,5 +1,7 @@
 # Credit Default Risk Scoring
 
+---
+
 ## Постановка задачи
 
 Мой интерес к этой теме связан с тем, что недавно я подробно разбирался в причинах кризиса 2008 года и увидел, насколько важно корректно оценивать кредитный риск. Цель проекта – построить модель кредитного скоринга, которая по заявке клиента оценивает риск дефолта и выдаёт вероятность невозврата. И хотя тот мировой кризис был связан прежде всего с ипотечными кредитами, сам подход к управлению риском универсален: решения должны опираться на данные и количественные критерии, а качество модели – быть воспроизводимо проверяемым.
@@ -37,23 +39,212 @@
 - **Объём**: около 180 МБ (train + test).
 - **Возможные проблемы**: много категориальных признаков и пропусков (нужен аккуратный препроцессинг), возможен дисбаланс классов.
 
+---
+
 ## Моделирование
 
 ### Бейзлайн
 
-В качестве baseline решения будет реализована минимальная нейросеть для табличных данных – однослойный перцептрон.
+В качестве baseline решения реализована минимальная нейросеть для табличных данных – однослойный перцептрон.
 
 **Архитектура**: один линейный слой (Linear) и выход на одно значение (вероятность дефолта). Это позволит максимально быстро получить стартовые метрики, с которыми будет сравниваться основная модель.
 
 ### Основная модель
 
-Будет использована простая MLP для табличных данных на PyTorch Lightning.
+Простая MLP для табличных данных на PyTorch Lightning.
 
-**Архитектура**: два скрытых слоя (Linear + ReLU) и выходной слой на одно значение (вероятность дефолта). Для снижения переобучения будет добавлена базовая регуляризация (dropout или weight decay). Обучение будет проводиться с ранней остановкой по валидации.
+**Архитектура**: два скрытых слоя (Linear + ReLU) и выходной слой на одно значение (вероятность дефолта). Для снижения переобучения добавлена базовая регуляризация (dropout или weight decay). Обучение будет проводиться с ранней остановкой по валидации.
+
+---
 
 ## Внедрение
 
-Модель будет оформлена в виде Python-пакета, который можно установить и использовать как библиотеку в других проектах. Пакет будет предоставлять API для загрузки сохранённых артефактов (веса модели и параметры препроцессинга) и получения предсказания по одной заявке:
+Модель оформлена в виде Python-пакета, который можно установить и использовать как библиотеку в других проектах. Пакет предоставляет собой API для загрузки сохранённых артефактов (веса модели и параметры препроцессинга) и получения предсказания по одной заявке:
 
-- функция **predict_proba(features)** будет возвращать вероятность дефолта,
-- функция **predict(features, threshold)** будет возвращать класс по порогу.
+- функция **predict_proba(features)** возвращает вероятность дефолта,
+- функция **predict(features, threshold)** возвращает класс по порогу.
+
+---
+
+## Setup
+
+### Установка зависимостей
+
+```bash
+poetry install
+```
+
+### Настройка pre-commit
+
+```bash
+poetry run pre-commit install
+poetry run pre-commit run -a
+```
+
+### Данные
+
+Данные не хранятся в git и управляются через DVC.
+
+При желании можно скачать заранее вручную:
+
+```bash
+poetry run dvc pull data/application_train.csv
+poetry run dvc pull data/application_test.csv
+```
+
+### MLflow (локальный запуск сервера)
+
+Пример команды для поднятия MLflow сервера на `127.0.0.1:8080`:
+
+```bash
+poetry run mlflow server \
+  --host 127.0.0.1 \
+  --port 8080 \
+  --backend-store-uri sqlite:///mlflow.db \
+  --default-artifact-root ./mlartifacts
+```
+
+---
+
+## Train
+
+Обучение запускается через Hydra-конфиги из папки `configs/`.
+
+### Baseline
+
+```bash
+poetry run python -m credit_scoring.train model=baseline_perceptron
+```
+
+### Основная модель
+
+```bash
+poetry run python -m credit_scoring.train model=mlp
+```
+
+### Примеры переопределения гиперпараметров
+
+```bash
+poetry run python -m credit_scoring.train model=mlp trainer.max_epochs=5 trainer.batch_size=512 trainer.lr=0.0005
+```
+
+### Результаты обучения
+
+- Метрики, параметры и артефакты логируются в MLflow (tracking URI задаётся в `configs/train.yaml`).
+- Графики сохраняются в папку `plots/` и также прикрепляются к MLflow-run.
+- Артефакты для инференса сохраняются в `artifacts/`.
+
+---
+
+## Production preparation
+
+Подготовка модели к использованию после обучения в этом проекте включает сохранение минимального набора артефактов, необходимых для повторяемого инференса.
+
+Папка `artifacts/` после `train` содержит:
+
+- `baseline_perceptron.pt` или `mlp.pt` — веса модели
+- `preprocess.json` — параметры препроцессинга (список фич, медианы для NaN, параметры стандартизации)
+- `model_config.json` — конфиг модели (имя, hidden_sizes, dropout, num_features)
+
+Этого набора достаточно, чтобы:
+
+- запускать CLI-инференс (`python -m credit_scoring.infer`)
+- вызывать Python API (`credit_scoring.api.predict_proba / predict`)
+
+---
+
+## Infer
+
+### 1) Command-line interface
+
+Перед инференсом нужно, чтобы были артефакты в `artifacts/` (то есть сначала запустить `train`).
+
+Запуск (по умолчанию берётся `request_id` из `configs/infer_params/default.yaml`):
+
+```bash
+poetry run python -m credit_scoring.infer model=mlp
+```
+
+Указать конкретный `request_id` и порог:
+
+```bash
+poetry run python -m credit_scoring.infer model=mlp infer_params.request_id=100005 infer_params.threshold=0.5
+```
+
+Что делает команда:
+
+- проверяет наличие `artifacts/preprocess.json` и весов модели
+- при необходимости скачивает
+- берёт одну строку по `SK_ID_CURR == request_id`
+- выводит `prob_default` и `pred_class` (с учётом `threshold`)
+
+### 2) Python API
+
+API находится в `credit_scoring/api.py`:
+
+- `predict_proba(features, ...) -> float`
+- `predict(features, threshold, ...) -> int`
+
+Пример:
+
+```python
+from credit_scoring.api import predict_proba, predict
+
+features = {
+    "AMT_INCOME_TOTAL": 180000,
+    "AMT_CREDIT": 600000,
+    "AMT_ANNUITY": 25000,
+}
+
+p = predict_proba(features, model_name="mlp", artifacts_dir="artifacts")
+y = predict(features, threshold=0.5, model_name="mlp", artifacts_dir="artifacts")
+
+print("proba:", p)
+print("class:", y)
+```
+
+---
+
+## Repo structure
+
+Примерная структура репозитория (часть папок появляется после запуска `train`/`infer`):
+
+```text
+.
+├── credit_scoring/                 # python-пакет проекта
+│   ├── api.py                      # predict_proba / predict
+│   ├── train.py                    # входная точка обучения
+│   ├── infer.py                    # входная точка инференса
+│   ├── lightning_module.py         # шаги train/val/test, логирование метрик
+│   ├── model.py                    # модели MLP и Perceptron
+│   ├── dataset.py                  # Dataset / DataLoader-логика
+│   ├── data.py                     # утилиты данных (DVC pull / fallback download, чтение CSV)
+│   └── __init__.py
+├── configs/                        # Hydra-конфиги (train/infer и группы параметров)
+│   ├── train.yaml
+│   ├── infer.yaml
+│   ├── model/
+│   │   ├── baseline_perceptron.yaml
+│   │   └── mlp.yaml
+│   ├── data/
+│   │   └── home_credit.yaml
+│   ├── preprocess/
+│   │   └── numeric_only.yaml
+│   ├── trainer/
+│   │   └── default.yaml
+│   └── infer_params/
+│       └── default.yaml
+├── data/                           # данные (в git лежат только *.dvc)
+│   ├── application_train.csv.dvc
+│   └── application_test.csv.dvc
+├── artifacts/                      # артефакты после обучения
+├── plots/                          # графики обучения
+├── outputs/                        # выходы Hydra
+├── mlruns/                         # локальные MLflow runs
+├── mlartifacts/                    # локальные MLflow artifacts
+├── mlflow.db                       # локальный backend-store MLflow
+├── .pre-commit-config.yaml
+├── pyproject.toml
+├── poetry.lock
+└── README.md
+```

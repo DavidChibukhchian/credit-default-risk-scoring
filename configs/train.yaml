@@ -16,7 +16,3 @@ split:
   val_size: 0.15
   test_size: 0.15
   random_state: ${seed}
-
-hydra:
-  run:
-    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}

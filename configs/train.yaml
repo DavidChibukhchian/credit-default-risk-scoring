@@ -20,3 +20,8 @@ split:
 hf_urls:
   application_train: "https://huggingface.co/datasets/d-chibukhchian/credit-default-risk-scoring/resolve/main/application_train.csv?download=1"
   application_test: "https://huggingface.co/datasets/d-chibukhchian/credit-default-risk-scoring/resolve/main/application_test.csv?download=1"
+
+mlflow:
+  tracking_uri: "http://127.0.0.1:8080"
+  experiment_name: "credit_scoring"
+  run_name: "${model}"

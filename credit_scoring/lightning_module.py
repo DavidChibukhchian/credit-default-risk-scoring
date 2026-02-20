@@ -20,7 +20,12 @@ class CreditRiskLitModule(pl.LightningModule):
         features, targets = batch
         logits = self(features).squeeze(1)
         loss = self.loss_fn(logits, targets)
-        self.log("train/logloss", loss, prog_bar=True)
+        probs = torch.sigmoid(logits.detach())
+        train_auc = self.auroc(probs, targets.int())
+        log_kw = dict(on_step=False, on_epoch=True)
+
+        self.log("train/roc_auc", train_auc, prog_bar=False, **log_kw)
+        self.log("train/logloss", loss, prog_bar=True, **log_kw)
         return loss
 
     def validation_step(self, batch, batch_idx):

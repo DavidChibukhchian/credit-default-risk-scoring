@@ -8,3 +8,6 @@ artifacts/
 multirun/
 .venv/
 dist/
+mlflow.db
+mlflow.db-journal
+mlruns/
